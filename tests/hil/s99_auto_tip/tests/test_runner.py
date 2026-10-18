@@ -7,7 +7,7 @@ import json
 import tempfile
 import unittest
 
-from s99_auto_tip_hil.model import HILError, read_json, validate_live_configuration, validate_manifest
+from s99_auto_tip_hil.model import HILError, read_json, validate_approved_live_limits, validate_live_configuration, validate_manifest
 from s99_auto_tip_hil.runner import load_catalogs, run_manifest
 
 
@@ -154,6 +154,27 @@ class RunnerTests(unittest.TestCase):
         validate_live_configuration(complete)
         # Even this fully populated record cannot enable power: the package has
         # no verified device adapter, and tests run with no hardware connected.
+        with self.assertRaises(HILError):
+            validate_approved_live_limits(self.manifest)
+        approved_manifest = copy.deepcopy(self.manifest)
+        approved_manifest["approved_live_limits"] = {
+            "approved": True,
+            "approval_record_id": "review-1",
+            "reviewed_by": "independent-reviewer",
+            "evidence_sha256": "b" * 64,
+            "limits": {
+                "minimum_input_voltage_v": 5,
+                "maximum_input_voltage_v": 20,
+                "maximum_peak_current_a": 1,
+                "maximum_pulse_energy_j": 0.1,
+                "maximum_total_energy_j": 1,
+                "maximum_run_seconds": 1,
+                "maximum_tip_temperature_c": 100,
+                "maximum_handle_temperature_c": 60,
+                "maximum_mosfet_temperature_c": 80,
+            },
+        }
+        validate_approved_live_limits(approved_manifest)
 
 
 if __name__ == "__main__":

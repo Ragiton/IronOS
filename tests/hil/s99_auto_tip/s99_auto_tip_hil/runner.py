@@ -8,8 +8,8 @@ from typing import Any, Mapping
 import hashlib
 import json
 
-from .model import AbortLatched, HILError, State, validate_live_configuration, validate_manifest
-from .simulator import FAULT_CHECKPOINT, SimulatedRig, SimulatedSafetyController
+from .model import AbortLatched, HILError, State, validate_approved_live_limits, validate_live_configuration, validate_manifest
+from .simulator import SimulatedRig, SimulatedSafetyController
 
 
 def load_catalogs(catalog_dir: Path) -> dict[str, dict[str, Any]]:
@@ -175,6 +175,7 @@ class Run:
             if self.fixture_config is None:
                 raise HILError("live mode requires an explicit fixture configuration file")
             validate_live_configuration(self.fixture_config)
+            validate_approved_live_limits(self.manifest)
             # No physical drivers have been qualified or included.  Refuse all
             # live power even when config claims are present; this is a safety
             # gate, not a placeholder that can silently energize the DUT.

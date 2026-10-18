@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Protocol
@@ -154,11 +153,27 @@ def validate_live_configuration(config: Mapping[str, Any]) -> None:
     require(isinstance(calibration_ids, list) and calibration_ids and all(calibration_ids), "current calibration IDs are required")
 
 
-@dataclass(frozen=True)
-class RunContext:
-    manifest: Mapping[str, Any]
-    mode: str
-    output_dir: Path
+def validate_approved_live_limits(manifest: Mapping[str, Any]) -> None:
+    """Require reviewed, measured limits before a future hardware adapter."""
+
+    approval = manifest.get("approved_live_limits")
+    require(isinstance(approval, dict), "approved_live_limits record is required for live mode")
+    require(approval.get("approved") is True, "live limits have not been approved")
+    require(bool(approval.get("approval_record_id")), "live limits need an approval record ID")
+    require(bool(approval.get("reviewed_by")), "live limits need an independent reviewer")
+    evidence_sha256 = approval.get("evidence_sha256")
+    require(isinstance(evidence_sha256, str) and _SHA256.fullmatch(evidence_sha256) is not None, "live limits need a SHA-256 evidence reference")
+    limits = approval.get("limits")
+    require(isinstance(limits, dict), "approved limits object is required")
+    required = (
+        "minimum_input_voltage_v", "maximum_input_voltage_v", "maximum_peak_current_a",
+        "maximum_pulse_energy_j", "maximum_total_energy_j", "maximum_run_seconds",
+        "maximum_tip_temperature_c", "maximum_handle_temperature_c", "maximum_mosfet_temperature_c",
+    )
+    for key in required:
+        value = limits.get(key)
+        require(isinstance(value, (int, float)) and value > 0, f"approved live limit {key} must be a positive measured value")
+    require(limits["minimum_input_voltage_v"] < limits["maximum_input_voltage_v"], "input voltage limits are inconsistent")
 
 
 class RigBackend(Protocol):
