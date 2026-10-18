@@ -1,0 +1,38 @@
+{
+  "schema_version": "s99.hil.manifest.v1",
+  "run_id": "offline-stage2-smoke",
+  "stage": "stage-2",
+  "device": {
+    "model": "Sequre S99",
+    "hardware_revision": "SIMULATED",
+    "device_id": "SIMULATED-DUT",
+    "firmware_git_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "firmware_build_id": "offline-simulator-only"
+  },
+  "cartridge": {
+    "cartridge_id": "c245_5p5_template",
+    "sample_id": "SIMULATED-C245-55",
+    "profile": "c245_5p5_ohm",
+    "cold_resistance_ohm": 5.5,
+    "mounted": true,
+    "no_contact_verified": true
+  },
+  "source": {
+    "source_id": "bench_dc_emulator",
+    "instance_id": "SIMULATED-BENCH-DC"
+  },
+  "cable": {
+    "cable_id": "sim_banana_fixture",
+    "instance_id": "SIMULATED-POWER-CABLE"
+  },
+  "debug_path": {
+    "debug_path_id": "sim_isolated_uart",
+    "instance_id": "SIMULATED-DEBUG-PATH"
+  },
+  "probe_profile": "offline-no-energy",
+  "manual_tip_setting": "C245_5R5",
+  "repetitions": 1,
+  "fault_injection": [],
+  "cartridge_change": {"requested": false},
+  "approved_live_limits": {"approved": false}
+}

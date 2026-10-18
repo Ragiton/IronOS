@@ -1,0 +1,12 @@
+{
+  "schema_version": "s99.hil.debug-paths.v1",
+  "entries": {
+    "sim_isolated_uart": {
+      "transport": "uart",
+      "record_status": "simulation_only",
+      "live_eligible": false,
+      "vbus_conductor_omitted": true,
+      "galvanic_isolation_verified": true
+    }
+  }
+}

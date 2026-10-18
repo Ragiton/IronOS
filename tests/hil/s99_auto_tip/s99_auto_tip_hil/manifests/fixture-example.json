@@ -1,0 +1,13 @@
+{
+  "schema_version": "s99.hil.fixture.v1",
+  "enabled": false,
+  "fixture_id": "UNCOMMISSIONED",
+  "station_id": "UNCOMMISSIONED",
+  "human_supervision_interlock_verified": false,
+  "debug_data_only_isolation_verified": false,
+  "source_selector_break_before_make_verified": false,
+  "fail_open_power_disconnect_verified": false,
+  "independent_cutoff": {"verified": false, "device_ids": []},
+  "verification_evidence_sha256": null,
+  "calibration_ids": []
+}

@@ -1,0 +1,8 @@
+{
+  "schema_version": "s99.hil.cartridges.v1",
+  "entries": {
+    "c245_2p5_template": {"profile": "c245_2p5_ohm", "nominal_resistance_ohm": 2.5, "record_status": "template", "live_eligible": false},
+    "c245_5p5_template": {"profile": "c245_5p5_ohm", "nominal_resistance_ohm": 5.5, "record_status": "template", "live_eligible": false},
+    "unknown_c245_template": {"profile": "unknown", "nominal_resistance_ohm": null, "record_status": "template", "live_eligible": false}
+  }
+}
