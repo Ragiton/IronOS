@@ -257,6 +257,10 @@
 #endif                 /* T55 */
 
 #ifdef MODEL_S99
+#if defined(AUTO_TIP_SELECTION)
+#error "S99 auto tip selection is blocked until its probe and output-stage safety gates are qualified"
+#endif
+
 #define VOLTAGE_DIV        460 // Default divider scaler
 #define CALIBRATION_OFFSET 200 // Default adc offset in uV
 #define PID_POWER_LIMIT    70  // Sets the max pwm power limit
@@ -285,6 +289,8 @@
 #define TIP_RESISTANCE            55   // x10 ohms; stock 5.5 ohm cartridge
 #define TIP_TYPE_SUPPORT          1    // Support for tips of different types, i.e. resistance
 #define TIPTYPE_C245              1    // Sequre 5.5 ohm stock or JBC/Relife style 2.5 ohm C245 cartridges
+// Keep AUTO_TIP_SELECTION undefined here. It prepends TIP_TYPE_AUTO and shifts the
+// persisted C245 enum values; S99 also has no safety-qualified detection probe yet.
 #define TIP_CURRENT_LIMIT_CHOP    1    // Envelope PWM for power, fast chop only for supply current limiting
 #define BUZZER_SETTING            1    // Expose the buzzer on/off as a user setting
 #define BUZZER_STARTUP_CHIRP      1    // Short beep once the boot logo has been shown
