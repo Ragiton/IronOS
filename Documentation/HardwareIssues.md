@@ -37,3 +37,7 @@ If it worked on older firmware, but not on 2.16+, weak solder joints are suspect
 If the CHan is extremely high, and reflowing the temperature sensor does not resolve the issue; inspect the pins in the main MCU, possibly try giving them a light squeeze to the board while watching CHan.
 
 If you have a different device, follow the same logic and locate the temperature sensor on your device.
+
+## Sequre S99 C245 tip selection
+
+The S99 firmware supports manual selection of the stock 5.5 Ω C245 cartridge or a 2.5 Ω C245 cartridge. Automatic cartridge detection is not available. The firmware estimates supply current from input voltage and the selected resistance to limit average PWM duty; it does not measure heater current during each pulse. A startup probe and classifier have not passed the required output-stage, supply, and repeatability safety gates, so do not enable automatic tip selection in an S99 build. See the [S99 auto-detection test plan](../docs/s99-auto-tip-detection-test-plan.md) for the gates and validation sequence.
