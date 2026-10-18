@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 import copy
+import contextlib
 import hashlib
+import io
 import json
 import tempfile
 import unittest
@@ -175,6 +177,45 @@ class RunnerTests(unittest.TestCase):
             },
         }
         validate_approved_live_limits(approved_manifest)
+
+    def test_live_mode_never_actuates_even_with_complete_claimed_configuration(self) -> None:
+        fixture = {
+            "schema_version": "s99.hil.fixture.v1",
+            "enabled": True,
+            "fixture_id": "fixture-test",
+            "station_id": "station-test",
+            "human_supervision_interlock_verified": True,
+            "debug_data_only_isolation_verified": True,
+            "source_selector_break_before_make_verified": True,
+            "fail_open_power_disconnect_verified": True,
+            "independent_cutoff": {"verified": True, "device_ids": ["cutoff-1"]},
+            "verification_evidence_sha256": "a" * 64,
+            "calibration_ids": ["cal-1"],
+        }
+        manifest = copy.deepcopy(self.manifest)
+        manifest["approved_live_limits"] = {
+            "approved": True,
+            "approval_record_id": "review-1",
+            "reviewed_by": "independent-reviewer",
+            "evidence_sha256": "b" * 64,
+            "limits": {
+                "minimum_input_voltage_v": 5,
+                "maximum_input_voltage_v": 20,
+                "maximum_peak_current_a": 1,
+                "maximum_pulse_energy_j": 0.1,
+                "maximum_total_energy_j": 1,
+                "maximum_run_seconds": 1,
+                "maximum_tip_temperature_c": 100,
+                "maximum_handle_temperature_c": 60,
+                "maximum_mosfet_temperature_c": 80,
+            },
+        }
+        with tempfile.TemporaryDirectory() as temporary, contextlib.redirect_stdout(io.StringIO()):
+            output_root = Path(temporary)
+            run_dir, exit_code = run_manifest(manifest, self.catalogs, output_root, "live", fixture)
+            self.assertIsNone(run_dir)
+            self.assertEqual(exit_code, 3)
+            self.assertEqual(list(output_root.iterdir()), [])
 
 
 if __name__ == "__main__":
