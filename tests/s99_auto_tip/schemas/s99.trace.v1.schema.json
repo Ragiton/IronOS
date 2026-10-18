@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ironos:s99:trace:v1",
+  "title": "IronOS S99 thermal-response trace v1",
+  "description": "Shared offline, firmware-telemetry, and HIL trace record. Null or omitted channels mean unmeasured; synthetic data is not hardware qualification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "trace_id", "trace_kind", "provenance", "metadata", "samples", "events"],
+  "properties": {
+    "schema_version": {"const": "s99.trace.v1"},
+    "trace_id": {"type": "string", "minLength": 1},
+    "trace_kind": {"enum": ["synthetic", "hardware_replay", "hardware_capture"]},
+    "provenance": {"enum": ["synthetic_model", "measured_hardware"]},
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "run_id": {"type": ["string", "null"]},
+        "device": {
+          "type": "object",
+          "properties": {
+            "model": {"type": ["string", "null"]},
+            "hardware_revision": {"type": ["string", "null"]},
+            "device_id": {"type": ["string", "null"]},
+            "firmware_git_sha": {"type": ["string", "null"]},
+            "firmware_build_id": {"type": ["string", "null"]}
+          },
+          "additionalProperties": true
+        },
+        "cartridge": {
+          "type": "object",
+          "properties": {
+            "profile": {"enum": ["c245_2p5_ohm", "c245_5p5_ohm", "unknown"]},
+            "sample_id": {"type": ["string", "null"]},
+            "cold_resistance_ohm": {"type": ["number", "null"]}
+          },
+          "additionalProperties": true
+        },
+        "supply": {
+          "type": "object",
+          "properties": {
+            "kind": {"enum": ["bench_dc", "usb_pd_fixed", "usb_pd_pps", "wall_charger", "power_bank", "battery_emulator", "battery_pack", "unknown"]},
+            "model": {"type": ["string", "null"]},
+            "contract_voltage_v": {"type": ["number", "null"]},
+            "contract_current_a": {"type": ["number", "null"]},
+            "state": {"type": ["string", "null"]}
+          },
+          "additionalProperties": true
+        },
+        "environment": {
+          "type": "object",
+          "properties": {
+            "ambient_temperature_c": {"type": ["number", "null"]},
+            "initial_tip_temperature_c": {"type": ["number", "null"]},
+            "no_contact_verified": {"type": ["boolean", "null"]}
+          },
+          "additionalProperties": true
+        },
+        "probe": {
+          "type": "object",
+          "properties": {
+            "profile_id": {"type": ["string", "null"]},
+            "manual_tip_setting": {"type": ["string", "null"]}
+          },
+          "additionalProperties": true
+        },
+        "instrumentation": {
+          "type": "object",
+          "properties": {
+            "calibration_ids": {"type": ["object", "null"]},
+            "timebase": {"const": "monotonic_since_start_us"}
+          },
+          "additionalProperties": true
+        },
+        "simulation": {"type": "object"}
+      },
+      "additionalProperties": true
+    },
+    "samples": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["time_us"],
+        "properties": {
+          "time_us": {"type": "number", "minimum": 0},
+          "tip_temperature_c": {"type": ["number", "null"]},
+          "tip_temperature_valid": {"type": ["boolean", "null"]},
+          "tip_adc_raw": {"type": ["integer", "null"]},
+          "ambient_temperature_c": {"type": ["number", "null"]},
+          "handle_temperature_c": {"type": ["number", "null"]},
+          "mosfet_temperature_c": {"type": ["number", "null"]},
+          "heater_commanded": {"type": ["boolean", "null"]},
+          "pwm_duty_x256": {"type": ["integer", "null"], "minimum": 0, "maximum": 256},
+          "gate_source_v": {"type": ["number", "null"]},
+          "gate_state": {"type": ["boolean", "null"]},
+          "dut_input_voltage_v": {"type": ["number", "null"]},
+          "source_current_a": {"type": ["number", "null"]},
+          "heater_current_a": {"type": ["number", "null"]},
+          "source_state": {"type": ["string", "null"]},
+          "source_contract_voltage_v": {"type": ["number", "null"]},
+          "source_contract_current_a": {"type": ["number", "null"]},
+          "safety_controller_state": {"type": ["string", "null"]},
+          "interlock_closed": {"type": ["boolean", "null"]},
+          "estop_closed": {"type": ["boolean", "null"]}
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["time_us", "type", "details"],
+        "properties": {
+          "time_us": {"type": "number", "minimum": 0},
+          "type": {"type": "string", "minLength": 1},
+          "details": {"type": "object"}
+        }
+      }
+    }
+  }
+}
