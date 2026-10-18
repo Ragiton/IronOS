@@ -1,0 +1,8 @@
+{
+  "schema_version": "s99.hil.cables.v1",
+  "entries": {
+    "sim_banana_fixture": {"power_interface": "banana_fixture", "record_status": "simulation_only", "live_eligible": false},
+    "sim_usb_c_inline": {"power_interface": "usb_c_inline", "record_status": "simulation_only", "live_eligible": false},
+    "sim_battery_fixture": {"power_interface": "battery_fixture", "record_status": "simulation_only", "live_eligible": false}
+  }
+}

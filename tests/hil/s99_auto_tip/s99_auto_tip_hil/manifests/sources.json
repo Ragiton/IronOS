@@ -1,0 +1,14 @@
+{
+  "schema_version": "s99.hil.sources.v1",
+  "entries": {
+    "bench_dc_emulator": {"kind": "bench_dc", "power_interface": "banana_fixture", "record_status": "template", "live_eligible": false},
+    "usb_pd_fixed_pdo": {"kind": "usb_pd_fixed", "power_interface": "usb_c_inline", "record_status": "template", "live_eligible": false},
+    "usb_pd_pps": {"kind": "usb_pd_pps", "power_interface": "usb_c_inline", "record_status": "template", "live_eligible": false},
+    "wall_charger_fixed_pdo": {"kind": "wall_charger", "power_interface": "usb_c_inline", "record_status": "template", "live_eligible": false},
+    "wall_charger_pps": {"kind": "wall_charger", "power_interface": "usb_c_inline", "record_status": "template", "live_eligible": false},
+    "power_bank_pd": {"kind": "power_bank", "power_interface": "usb_c_inline", "record_status": "template", "live_eligible": false},
+    "power_bank_pps": {"kind": "power_bank", "power_interface": "usb_c_inline", "record_status": "template", "live_eligible": false},
+    "battery_emulator": {"kind": "battery_emulator", "power_interface": "battery_fixture", "record_status": "template", "live_eligible": false},
+    "protected_battery_pack": {"kind": "battery_pack", "power_interface": "battery_fixture", "record_status": "template", "live_eligible": false}
+  }
+}
