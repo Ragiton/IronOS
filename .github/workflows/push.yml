@@ -233,6 +233,9 @@ jobs:
       - name: Run python tests
         run: ./Translations/make_translation_test.py
 
+      - name: Run S99 offline model and trace replay tests
+        run: PYTHONPATH=tests python3 -m unittest discover -s tests/s99_auto_tip -t tests -p 'test_*.py' -v
+
       - name: Run BriefLZ tests
         run: make  -C source/  Objects/host/brieflz/libbrieflz.so && ./Translations/brieflz_test.py
 
