@@ -1,0 +1,117 @@
+name: S99 auto-tip HIL harness
+
+on:
+  pull_request:
+    paths:
+      - "tests/hil/s99_auto_tip/**"
+      - ".github/workflows/s99-auto-tip-hil.yml"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Dry-run is the default. Hardware mode is isolated to a commissioned self-hosted fixture."
+        type: choice
+        options:
+          - dry-run
+          - hardware
+        default: dry-run
+        required: true
+      manifest:
+        description: "A JSON manifest inside tests/hil/s99_auto_tip/s99_auto_tip_hil/manifests/"
+        type: string
+        default: tests/hil/s99_auto_tip/s99_auto_tip_hil/manifests/stage-2-dummy-fault-smoke.json
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    name: Offline state machine and fault injection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run host-only tests
+        env:
+          PYTHONPATH: tests/hil/s99_auto_tip
+        run: python -m unittest discover -s tests/hil/s99_auto_tip/tests -v
+      - name: Run default dry-run manifest
+        env:
+          PYTHONPATH: tests/hil/s99_auto_tip
+        run: >-
+          python -m s99_auto_tip_hil
+          --manifest tests/hil/s99_auto_tip/s99_auto_tip_hil/manifests/stage-2-dummy-fault-smoke.json
+          --output-root artifacts/s99-auto-tip-hil
+      - name: Upload simulated run bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s99-auto-tip-hil-offline-${{ github.run_id }}
+          path: artifacts/s99-auto-tip-hil/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  hardware:
+    name: Explicit hardware-mode request (currently fail-closed)
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'hardware'
+    runs-on: [self-hosted, linux, s99-hil, hardware]
+    timeout-minutes: 30
+    concurrency:
+      group: s99-hil-physical-fixture
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate manifest location and fixture configuration
+        env:
+          REQUESTED_MANIFEST: ${{ inputs.manifest }}
+          S99_HIL_CONFIG: ${{ vars.S99_HIL_CONFIG }}
+        run: |
+          set -euo pipefail
+          case "$REQUESTED_MANIFEST" in
+            tests/hil/s99_auto_tip/s99_auto_tip_hil/manifests/*.json) ;;
+            *) echo "Manifest must be inside the committed HIL manifests directory" >&2; exit 3 ;;
+          esac
+          test -f "$REQUESTED_MANIFEST"
+          test -n "$S99_HIL_CONFIG"
+          test -r "$S99_HIL_CONFIG"
+      - name: Refuse live actuation until a reviewed adapter exists
+        env:
+          PYTHONPATH: tests/hil/s99_auto_tip
+          REQUESTED_MANIFEST: ${{ inputs.manifest }}
+          S99_HIL_CONFIG: ${{ vars.S99_HIL_CONFIG }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/s99-auto-tip-hil-hardware
+          set +e
+          python -m s99_auto_tip_hil \
+            --manifest "$REQUESTED_MANIFEST" \
+            --mode live \
+            --fixture-config "$S99_HIL_CONFIG" \
+            --output-root artifacts/s99-auto-tip-hil-hardware \
+            > artifacts/s99-auto-tip-hil-hardware/refusal.log 2>&1
+          result=$?
+          set -e
+          cat artifacts/s99-auto-tip-hil-hardware/refusal.log
+          if [ "$result" -eq 0 ]; then
+            echo "Unexpected live-mode success without a reviewed hardware adapter" >&2
+            exit 1
+          fi
+          if ! grep -q "no hardware adapter or independently verified fixture driver" artifacts/s99-auto-tip-hil-hardware/refusal.log; then
+            echo "Live mode did not stop at the expected fail-closed adapter gate" >&2
+            exit 1
+          fi
+          echo "Live actuation remains unavailable by design; no power was applied."
+      - name: Upload hardware-mode refusal record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s99-auto-tip-hil-live-gate-${{ github.run_id }}
+          path: artifacts/s99-auto-tip-hil-hardware/
+          if-no-files-found: ignore
+          retention-days: 30
