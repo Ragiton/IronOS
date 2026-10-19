@@ -18,11 +18,11 @@
     "no_contact_verified": true
   },
   "source": {
-    "source_id": "bench_dc_emulator",
+    "source_id": "user_bench_dc_template",
     "instance_id": "SIMULATED-BENCH-DC"
   },
   "cable": {
-    "cable_id": "sim_banana_fixture",
+    "cable_id": "sim_dc_to_s99_adapter_template",
     "instance_id": "SIMULATED-POWER-CABLE"
   },
   "debug_path": {
@@ -33,6 +33,6 @@
   "manual_tip_setting": "C245_5R5",
   "repetitions": 1,
   "fault_injection": [],
-  "cartridge_change": {"requested": false},
+  "manual_tip_change_after_run": {"required": false},
   "approved_live_limits": {"approved": false}
 }

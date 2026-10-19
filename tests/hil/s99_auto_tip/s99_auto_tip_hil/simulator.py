@@ -48,6 +48,7 @@ class SimulatedRig:
         self.latch = False
         self._fault_fired = False
         self._independent_safety: SimulatedSafetyController | None = None
+        self._sample_index = 0
 
     def bind_safety_controller(self, safety: "SimulatedSafetyController") -> None:
         self._independent_safety = safety
@@ -132,10 +133,36 @@ class SimulatedRig:
             "source_state": "simulated_disconnected",
             "source_contract_voltage_v": None,
             "source_contract_current_a": None,
+            "source_contract_stable": True,
             "safety_controller_state": "latched" if self.latch else "ready",
             "interlock_closed": True,
             "estop_closed": True,
         }
+
+    def read_safety_sample(self) -> Mapping[str, Any]:
+        """Return synthetic-only samples for testing monitor control flow."""
+
+        self._sample_index += 1
+        return {
+            "time_s": self._sample_index * 0.1,
+            "input_voltage_v": 12.0,
+            "peak_current_a": 1.0,
+            "pulse_energy_j": 0.001,
+            "total_energy_j": 0.001 * self._sample_index,
+            "tip_temperature_c": 22.0,
+            "handle_temperature_c": 22.0,
+            "mosfet_temperature_c": 22.0,
+            "tip_temperature_valid": True,
+            "source_stable": True,
+            "interlock_closed": True,
+            "estop_closed": True,
+        }
+
+    def wait_for_tip_cooldown(self, maximum_temperature_c: float, timeout_seconds: float) -> bool:
+        """Evaluate the synthetic temperature only; never waits on real hardware."""
+
+        temperature = self.snapshot().get("tip_temperature_c")
+        return isinstance(temperature, (int, float)) and temperature <= maximum_temperature_c
 
     def start_probe(self) -> None:
         # A simulated probe is an event only.  It never toggles a real output.
@@ -144,11 +171,6 @@ class SimulatedRig:
     def stop_probe(self) -> None:
         self.probe_started = False
         self.power_enabled = False
-
-    def change_cartridge(self, cartridge_id: str) -> None:
-        if self.power_enabled or self.sources_enabled or self.sources_connected:
-            raise HILError("simulator rejected cartridge change while power was present")
-
 
 class SimulatedSafetyController:
     """Separate software model of the independent cutoff interface."""
@@ -162,6 +184,11 @@ class SimulatedSafetyController:
 
     def heartbeat(self) -> bool:
         return not self.rig.latch
+
+    def configure_hard_limits(self, limits: Mapping[str, float]) -> bool:
+        # This only exercises the software contract. The simulator is not an
+        # independently qualified hardware cutoff.
+        return bool(limits) and not self.rig.latch
 
     def cut_power_and_latch(self, cause: str) -> None:
         self.rig.latch = True

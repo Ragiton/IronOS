@@ -1,8 +1,25 @@
 {
   "schema_version": "s99.hil.cables.v1",
   "entries": {
-    "sim_banana_fixture": {"power_interface": "banana_fixture", "record_status": "simulation_only", "live_eligible": false},
-    "sim_usb_c_inline": {"power_interface": "usb_c_inline", "record_status": "simulation_only", "live_eligible": false},
-    "sim_battery_fixture": {"power_interface": "battery_fixture", "record_status": "simulation_only", "live_eligible": false}
+    "sim_dc_to_s99_adapter_template": {
+      "power_interface": "dc_to_s99_adapter",
+      "record_status": "simulation_only",
+      "live_eligible": false,
+      "source_connector": null,
+      "dut_connector": null,
+      "polarity": null,
+      "voltage_rating_v": null,
+      "current_rating_a": null
+    },
+    "sim_usb_c_to_s99_adapter_template": {
+      "power_interface": "usb_c_to_s99_adapter",
+      "record_status": "simulation_only",
+      "live_eligible": false,
+      "source_connector": "USB-C",
+      "dut_connector": null,
+      "cc_wiring": null,
+      "vbus_rating_v": null,
+      "current_rating_a": null
+    }
   }
 }

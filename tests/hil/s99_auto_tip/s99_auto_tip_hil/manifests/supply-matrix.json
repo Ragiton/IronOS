@@ -1,15 +1,9 @@
 {
   "schema_version": "s99.hil.supply-matrix.v1",
-  "purpose": "Offline source-selection control-flow coverage only; no supply or S99 hardware is operated.",
+  "purpose": "Offline control-flow coverage for the user's three initial source classes only. Asset models and cabling remain unresolved; no supply or S99 hardware is operated.",
   "cases": [
-    {"source_id": "bench_dc_emulator", "cable_id": "sim_banana_fixture"},
-    {"source_id": "usb_pd_fixed_pdo", "cable_id": "sim_usb_c_inline"},
-    {"source_id": "usb_pd_pps", "cable_id": "sim_usb_c_inline"},
-    {"source_id": "wall_charger_fixed_pdo", "cable_id": "sim_usb_c_inline"},
-    {"source_id": "wall_charger_pps", "cable_id": "sim_usb_c_inline"},
-    {"source_id": "power_bank_pd", "cable_id": "sim_usb_c_inline"},
-    {"source_id": "power_bank_pps", "cable_id": "sim_usb_c_inline"},
-    {"source_id": "battery_emulator", "cable_id": "sim_battery_fixture"},
-    {"source_id": "protected_battery_pack", "cable_id": "sim_battery_fixture"}
+    {"source_id": "user_bench_dc_template", "cable_id": "sim_dc_to_s99_adapter_template"},
+    {"source_id": "user_usb_c_wall_template", "cable_id": "sim_usb_c_to_s99_adapter_template"},
+    {"source_id": "user_usb_c_battery_template", "cable_id": "sim_usb_c_to_s99_adapter_template"}
   ]
 }

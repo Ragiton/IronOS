@@ -1,0 +1,25 @@
+{
+  "schema_version": "s99.hil.initial-asset-matrix.v1",
+  "purpose": "Enumerates the initial three source classes against all six physical tips; this is a planning matrix, not a run queue.",
+  "live_eligible": false,
+  "cases": [
+    {"source_id": "user_bench_dc_template", "tip_id": "included_tip_1", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_bench_dc_template", "tip_id": "included_tip_2", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_bench_dc_template", "tip_id": "included_tip_3", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_bench_dc_template", "tip_id": "official_jbc_tip_1", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_bench_dc_template", "tip_id": "official_jbc_tip_2", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_bench_dc_template", "tip_id": "official_jbc_tip_3", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_wall_template", "tip_id": "included_tip_1", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_wall_template", "tip_id": "included_tip_2", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_wall_template", "tip_id": "included_tip_3", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_wall_template", "tip_id": "official_jbc_tip_1", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_wall_template", "tip_id": "official_jbc_tip_2", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_wall_template", "tip_id": "official_jbc_tip_3", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_battery_template", "tip_id": "included_tip_1", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_battery_template", "tip_id": "included_tip_2", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_battery_template", "tip_id": "included_tip_3", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_battery_template", "tip_id": "official_jbc_tip_1", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_battery_template", "tip_id": "official_jbc_tip_2", "status": "awaiting_source_and_tip_qualification"},
+    {"source_id": "user_usb_c_battery_template", "tip_id": "official_jbc_tip_3", "status": "awaiting_source_and_tip_qualification"}
+  ]
+}

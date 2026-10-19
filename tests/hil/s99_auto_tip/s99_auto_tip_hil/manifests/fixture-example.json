@@ -7,7 +7,9 @@
   "debug_data_only_isolation_verified": false,
   "source_selector_break_before_make_verified": false,
   "fail_open_power_disconnect_verified": false,
-  "independent_cutoff": {"verified": false, "device_ids": []},
+  "hardware_manifest_sha256": null,
+  "instrument_manifest_sha256": null,
+  "independent_cutoff": {"verified": false, "device_ids": [], "qualification_evidence_sha256": null},
   "verification_evidence_sha256": null,
   "calibration_ids": []
 }

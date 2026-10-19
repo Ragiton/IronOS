@@ -6,6 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Protocol
 import json
+import math
 import re
 
 
@@ -113,12 +114,16 @@ def validate_manifest(
     }
     require(all(fault in known_faults for fault in faults), "fault_injection contains an unknown fault")
 
-    change = manifest.get("cartridge_change", {"requested": False})
-    require(isinstance(change, dict), "cartridge_change must be an object")
-    if change.get("requested") is True:
-        require(isinstance(change.get("cooldown_max_tip_temperature_c"), (int, float)), "cartridge change requires a cooldown temperature limit")
-        require(change["cooldown_max_tip_temperature_c"] >= 0, "cooldown temperature limit must be nonnegative")
-        require(change.get("automatic_changer_id"), "cartridge change requires a preconfigured automatic changer")
+    require("cartridge_change" not in manifest, "cartridge changes are manual and may only happen after a safe, cooled run boundary")
+    manual_tip_change = manifest.get("manual_tip_change_after_run", {"required": False})
+    require(isinstance(manual_tip_change, dict), "manual_tip_change_after_run must be an object")
+    if manual_tip_change.get("required") is True:
+        maximum = manual_tip_change.get("cooldown_max_tip_temperature_c")
+        timeout = manual_tip_change.get("cooldown_timeout_seconds")
+        require(isinstance(maximum, (int, float)) and not isinstance(maximum, bool) and math.isfinite(maximum) and maximum >= 0,
+                "manual tip change requires an explicit finite cooldown temperature limit")
+        require(isinstance(timeout, (int, float)) and not isinstance(timeout, bool) and math.isfinite(timeout) and timeout > 0,
+                "manual tip change requires an explicit finite cooldown timeout")
 
     authorization = manifest.get("approved_live_limits")
     if authorization is not None:
@@ -142,11 +147,17 @@ def validate_live_configuration(config: Mapping[str, Any]) -> None:
     require(config.get("debug_data_only_isolation_verified") is True, "debug data-only isolation is not verified")
     require(config.get("source_selector_break_before_make_verified") is True, "break-before-make source selector is not verified")
     require(config.get("fail_open_power_disconnect_verified") is True, "fail-open power disconnect is not verified")
+    for key in ("hardware_manifest_sha256", "instrument_manifest_sha256"):
+        digest = config.get(key)
+        require(isinstance(digest, str) and _SHA256.fullmatch(digest) is not None, f"{key} must reference the reviewed hardware manifest")
     cutoff = config.get("independent_cutoff")
     require(isinstance(cutoff, dict), "independent_cutoff configuration is required")
     require(cutoff.get("verified") is True, "independent cutoff is not verified")
     cutoff_ids = cutoff.get("device_ids", [])
     require(isinstance(cutoff_ids, list) and len(cutoff_ids) >= 1 and all(cutoff_ids), "independent cutoff device IDs are required")
+    cutoff_evidence = cutoff.get("qualification_evidence_sha256")
+    require(isinstance(cutoff_evidence, str) and _SHA256.fullmatch(cutoff_evidence) is not None,
+            "independent cutoff must reference its qualification evidence")
     evidence = config.get("verification_evidence_sha256")
     require(isinstance(evidence, str) and _SHA256.fullmatch(evidence) is not None, "verification evidence digest is required")
     calibration_ids = config.get("calibration_ids")
@@ -168,16 +179,18 @@ def validate_approved_live_limits(manifest: Mapping[str, Any]) -> None:
     required = (
         "minimum_input_voltage_v", "maximum_input_voltage_v", "maximum_peak_current_a",
         "maximum_pulse_energy_j", "maximum_total_energy_j", "maximum_run_seconds",
+        "maximum_sample_interval_s",
         "maximum_tip_temperature_c", "maximum_handle_temperature_c", "maximum_mosfet_temperature_c",
     )
     for key in required:
         value = limits.get(key)
-        require(isinstance(value, (int, float)) and value > 0, f"approved live limit {key} must be a positive measured value")
+        require(isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > 0,
+                f"approved live limit {key} must be a finite positive measured value")
     require(limits["minimum_input_voltage_v"] < limits["maximum_input_voltage_v"], "input voltage limits are inconsistent")
 
 
 class RigBackend(Protocol):
-    """The narrow fixture boundary; live implementations require safety review."""
+    """Fixture contract; a physical implementation requires independent review."""
 
     def snapshot(self) -> Mapping[str, Any]: ...
 
@@ -197,12 +210,13 @@ class RigBackend(Protocol):
 
     def read_telemetry(self) -> Mapping[str, Any]: ...
 
+    def read_safety_sample(self) -> Mapping[str, Any]: ...
+
+    def wait_for_tip_cooldown(self, maximum_temperature_c: float, timeout_seconds: float) -> bool: ...
+
     def start_probe(self) -> None: ...
 
     def stop_probe(self) -> None: ...
-
-    def change_cartridge(self, cartridge_id: str) -> None: ...
-
 
 class IndependentSafety(Protocol):
     """A separate fail-open cutoff and watchdog, never the DUT/host itself."""
@@ -210,6 +224,8 @@ class IndependentSafety(Protocol):
     def self_test(self) -> bool: ...
 
     def heartbeat(self) -> bool: ...
+
+    def configure_hard_limits(self, limits: Mapping[str, float]) -> bool: ...
 
     def cut_power_and_latch(self, cause: str) -> None: ...
 

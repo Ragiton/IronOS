@@ -121,23 +121,31 @@ class Run:
         self._checkpoint("preflight")
         return snapshot
 
-    def _change_cartridge_if_requested(self, snapshot: Mapping[str, Any]) -> None:
-        request = self.manifest.get("cartridge_change", {})
-        if request.get("requested") is not True:
+    def _manual_tip_change_boundary(self) -> None:
+        request = self.manifest.get("manual_tip_change_after_run", {})
+        if request.get("required") is not True:
             return
-        # Require power-off, disconnected source, a discharged DUT bus and a
-        # cold tip before invoking the fixture's preconfigured changer.
+        # The human changes the tip only after this process has stopped. The
+        # runner verifies the safe boundary but never operates a tip changer.
+        snapshot = self.rig.snapshot()
         if snapshot.get("dut_power_enabled") is not False or snapshot.get("connected_source_ids"):
-            raise HILError("cartridge change requires power-off and all sources disconnected")
+            raise HILError("manual tip change requires heater-off and all sources disconnected")
         if not self.rig.verify_bus_discharged():
-            raise HILError("cartridge change requires verified DUT bus discharge")
+            raise HILError("manual tip change requires verified DUT bus discharge")
         tip_temperature = snapshot.get("tip_temperature_c")
-        max_temperature = request.get("cooldown_max_tip_temperature_c")
-        if not isinstance(tip_temperature, (int, float)) or tip_temperature > max_temperature:
-            raise HILError("cartridge change blocked until tip is below the manifest cooldown limit")
-        self._event("cartridge_change_preconditions_passed", tip_temperature_c=tip_temperature, max_temperature_c=max_temperature)
-        self.rig.change_cartridge(self.manifest["cartridge"]["cartridge_id"])
-        self._event("cartridge_change_fixture_completed", changer_id=request["automatic_changer_id"], cartridge_id=self.manifest["cartridge"]["cartridge_id"])
+        max_temperature = request["cooldown_max_tip_temperature_c"]
+        timeout = request["cooldown_timeout_seconds"]
+        if not isinstance(tip_temperature, (int, float)) or not self.rig.wait_for_tip_cooldown(max_temperature, timeout):
+            raise HILError("manual tip change boundary was not reached before cooldown timeout")
+        self._event(
+            "manual_tip_change_boundary_reached",
+            tip_temperature_c=tip_temperature,
+            maximum_temperature_c=max_temperature,
+            cooldown_timeout_seconds=timeout,
+            source_power_off=True,
+            bus_discharged=True,
+            operator_action="replace the tip only after this run has exited",
+        )
 
     def _switch_source_break_before_make(self) -> None:
         source_id = self.manifest["source"]["source_id"]
@@ -189,8 +197,7 @@ class Run:
         status = "complete"
         exit_code = 0
         try:
-            snapshot = self._assert_preflight()
-            self._change_cartridge_if_requested(snapshot)
+            self._assert_preflight()
             self._switch_source_break_before_make()
             self._heartbeat()
             self._transition(State.ARMED)
@@ -206,6 +213,7 @@ class Run:
             if not self.rig.verify_bus_discharged():
                 raise HILError("DUT bus did not discharge during simulated shutdown")
             self._event("shutdown_complete", heater_off=True, sources_disconnected=True)
+            self._manual_tip_change_boundary()
             self._transition(State.COMPLETE)
         except Exception as exc:  # Any unplanned condition fails closed.
             status = "abort_latched"

@@ -1,0 +1,60 @@
+{
+  "schema_version": "s99.hil.tip-inventory.v1",
+  "purpose": "Initial user-owned test assets. Placeholders must be identified and measured before physical runs.",
+  "tips": [
+    {
+      "tip_id": "included_tip_1",
+      "brand": "included_with_s99",
+      "model": null,
+      "serial_number": null,
+      "cold_resistance_ohm": null,
+      "record_status": "awaiting_user_label_and_measurement",
+      "live_eligible": false
+    },
+    {
+      "tip_id": "included_tip_2",
+      "brand": "included_with_s99",
+      "model": null,
+      "serial_number": null,
+      "cold_resistance_ohm": null,
+      "record_status": "awaiting_user_label_and_measurement",
+      "live_eligible": false
+    },
+    {
+      "tip_id": "included_tip_3",
+      "brand": "included_with_s99",
+      "model": null,
+      "serial_number": null,
+      "cold_resistance_ohm": null,
+      "record_status": "awaiting_user_label_and_measurement",
+      "live_eligible": false
+    },
+    {
+      "tip_id": "official_jbc_tip_1",
+      "brand": "JBC",
+      "model": null,
+      "serial_number": null,
+      "cold_resistance_ohm": null,
+      "record_status": "awaiting_user_label_and_measurement",
+      "live_eligible": false
+    },
+    {
+      "tip_id": "official_jbc_tip_2",
+      "brand": "JBC",
+      "model": null,
+      "serial_number": null,
+      "cold_resistance_ohm": null,
+      "record_status": "awaiting_user_label_and_measurement",
+      "live_eligible": false
+    },
+    {
+      "tip_id": "official_jbc_tip_3",
+      "brand": "JBC",
+      "model": null,
+      "serial_number": null,
+      "cold_resistance_ohm": null,
+      "record_status": "awaiting_user_label_and_measurement",
+      "live_eligible": false
+    }
+  ]
+}
