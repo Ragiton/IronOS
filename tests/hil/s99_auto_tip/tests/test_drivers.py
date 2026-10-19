@@ -5,6 +5,7 @@ import ctypes
 import socket
 import threading
 import unittest
+from unittest.mock import patch
 
 from s99_auto_tip_hil.drivers import InstrumentIdentity, PicoTc08Driver, ScpiTcpTransport, WaveformCapture
 from s99_auto_tip_hil.model import HILError
@@ -51,9 +52,40 @@ class ScpiTransportTests(unittest.TestCase):
         self.assertEqual(payload, b"abcdef")
 
     def test_transport_refuses_scpi_write_commands(self) -> None:
-        with ScpiTcpTransport("127.0.0.1", 5555, timeout_s=0.1) as client:
-            with self.assertRaisesRegex(HILError, "query commands"):
+        with ScpiTcpTransport("127.0.0.1", 5555, timeout_s=0.1) as client, patch(
+            "s99_auto_tip_hil.drivers.socket.create_connection"
+        ) as connect:
+            with self.assertRaisesRegex(HILError, "allowlist"):
                 client.query_ascii(":OUTP ON")
+            connect.assert_not_called()
+
+    def test_transport_rejects_chained_write_before_connecting(self) -> None:
+        commands = (
+            "OUTP ON;*IDN?",
+            "*IDN?;OUTP ON",
+            ":WAV:DATA?;:OUTP ON",
+        )
+        with ScpiTcpTransport("127.0.0.1", 5555, timeout_s=0.1) as client, patch(
+            "s99_auto_tip_hil.drivers.socket.create_connection"
+        ) as connect:
+            for command in commands:
+                with self.subTest(command=command), self.assertRaisesRegex(HILError, "unchained|allowlist"):
+                    client.query_ascii(command)
+            connect.assert_not_called()
+
+    def test_transport_rejects_malformed_query_before_connecting(self) -> None:
+        commands = ("", "*IDN? extra", "*IDN?\n:OUTP ON", "*IDN?\x00", "¿IDN?")
+        with ScpiTcpTransport("127.0.0.1", 5555, timeout_s=0.1) as client, patch(
+            "s99_auto_tip_hil.drivers.socket.create_connection"
+        ) as connect:
+            for command in commands:
+                with self.subTest(command=command), self.assertRaises(HILError):
+                    client.query_ascii(command)
+            connect.assert_not_called()
+
+    def test_allowlisted_safe_queries_are_accepted(self) -> None:
+        self.assertEqual(ScpiTcpTransport._validate_query("  *idn? \t"), b"*IDN?\n")
+        self.assertEqual(ScpiTcpTransport._validate_query(":wav:data?"), b":WAV:DATA?\n")
 
     def test_waveform_capture_requires_channel_and_timebase_consistency(self) -> None:
         capture = WaveformCapture(

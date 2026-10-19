@@ -70,13 +70,16 @@ class ScpiQueryTransport(Protocol):
 
 
 class ScpiTcpTransport:
-    """Query-only SCPI transport for instruments with a TCP text socket.
+    """Allowlisted SCPI query transport for instruments with a TCP socket.
 
-    It intentionally has no command-write method.  A device-specific scope
-    adapter can use it to identify the instrument and retrieve data from an
-    already configured acquisition.  Live fixture actuation remains outside
-    this transport and is refused by the runner.
+    SCPI permits compound commands separated by semicolons, so checking only
+    for a trailing `?` would allow a query followed by a write. Only exact,
+    reviewed read operations are accepted. Add commands only after reviewing
+    their semantics; this transport cannot configure an acquisition or
+    actuate the fixture.
     """
+
+    SAFE_QUERY_COMMANDS = frozenset({"*IDN?", ":WAV:DATA?"})
 
     def __init__(self, host: str, port: int = 5555, timeout_s: float = 2.0, max_response_bytes: int = 16_777_216):
         if not host or "\n" in host or "\r" in host:
@@ -108,11 +111,21 @@ class ScpiTcpTransport:
 
     @staticmethod
     def _validate_query(command: str) -> bytes:
-        if not isinstance(command, str) or not command.strip().endswith("?"):
-            raise HILError("read-only SCPI transport accepts query commands ending in '?'")
-        if "\n" in command or "\r" in command:
-            raise HILError("SCPI command must be one line")
-        return command.strip().encode("ascii") + b"\n"
+        if not isinstance(command, str) or not command:
+            raise HILError("SCPI command must be one allowlisted query")
+        # Trim only ordinary outer spaces/tabs. The fixed allowlist makes
+        # separators, arguments, embedded control characters, and writes fail
+        # closed without trying to parse SCPI's compound-command grammar.
+        candidate = command.strip(" \t")
+        try:
+            canonical = candidate.encode("ascii").decode("ascii").upper()
+        except UnicodeEncodeError as exc:
+            raise HILError("SCPI command must contain ASCII only") from exc
+        if any(character in canonical for character in "\n\r;\x00"):
+            raise HILError("SCPI command must be one unchained query")
+        if canonical not in ScpiTcpTransport.SAFE_QUERY_COMMANDS:
+            raise HILError("SCPI command is not in the reviewed safe-query allowlist")
+        return canonical.encode("ascii") + b"\n"
 
     def query_ascii(self, command: str) -> str:
         payload = self._validate_query(command)
